@@ -5,12 +5,12 @@ export const gallery = defineStorage({
   isDefault: true,
   access: (allow) => ({
     'art/*': [
-      allow.guest.to(['read']),
-      allow.authenticated.to(['read']),
+      allow.guest.to(['read', 'write']),
+      allow.authenticated.to(['read', 'write']),
     ],
     'photos/*': [
-      allow.guest.to(['read']),
-      allow.authenticated.to(['read']),
+      allow.guest.to(['read', 'write']),
+      allow.authenticated.to(['read', 'write']),
     ],
   }),
 });

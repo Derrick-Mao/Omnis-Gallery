@@ -8,6 +8,7 @@ import "./../app/app.css";
 import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import "@aws-amplify/ui-react/styles.css";
+import { uploadData } from "aws-amplify/storage";
 
 Amplify.configure(outputs);
 
@@ -37,6 +38,44 @@ export default function App() {
     client.models.Todo.delete({ id });
   }
 
+  async function imageUpload() {
+    const fileInput = document.getElementById("file") as HTMLInputElement;
+    if (!fileInput?.files?.[0]) {
+      alert("Please select a file");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const fileReader = new FileReader();
+    
+    fileReader.readAsArrayBuffer(file);
+
+    fileReader.onload = async (event) => {
+      try {
+        const arrayBuffer = event.target?.result;
+        if (!arrayBuffer) {
+          throw new Error("File reader failed to read file");
+        }
+
+        await uploadData({
+          data: arrayBuffer,
+          path: `art/${file.name}`,
+          options: {
+            bucket: {
+              bucketName: "amplify-d28yvtaq3spb0b-main--gallerybucket0d10a12d-nwa7vcma48js",
+              region: "us-west-1"
+            }
+          }
+        });
+
+        alert("File uploaded successfully");
+      } catch (error) {
+        console.error("Error uploading file", error);
+        alert("Failed to upload file");
+      } 
+    };
+  }
+
   return (
     <main>
       <h1>{user?.signInDetails?.loginId}'s todos</h1>
@@ -53,6 +92,10 @@ export default function App() {
         <a href="https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/">
           Review next steps of this tutorial.
         </a>
+      </div>
+      <div>
+        <input type="file" id="file" />
+        <button id="upload" onClick={imageUpload}>Upload</button>
       </div>
       <button onClick={signOut}>Sign out</button>
     </main>
