@@ -8,7 +8,8 @@ import "./../app/app.css";
 import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import "@aws-amplify/ui-react/styles.css";
-import { uploadData } from "aws-amplify/storage";
+import { uploadData, list, ListPaginateWithPathOutput } from "aws-amplify/storage";
+import Image from "next/image";
 
 Amplify.configure(outputs);
 
@@ -16,7 +17,8 @@ const client = generateClient<Schema>();
 
 export default function App() {
   const { user, signOut } = useAuthenticator();
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const [ todos, setTodos ] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const [ photos, setPhotos ] = useState<ListPaginateWithPathOutput>();
 
   function listTodos() {
     client.models.Todo.observeQuery().subscribe({
@@ -76,8 +78,43 @@ export default function App() {
     };
   }
 
+  const listPhotos = async () => {
+    const result = await list({
+      path: 'art/',
+      options: {
+        bucket: {
+          bucketName: "amplify-d28yvtaq3spb0b-main--gallerybucket0d10a12d-nwa7vcma48js",
+          region: "us-west-1"
+        }
+      }
+    });
+  
+    setPhotos(result);
+    // result.items.forEach((item) => {
+    //   console.log(item.path)
+    // })
+  }
+
+  useEffect(() => {
+    listPhotos();
+  }, []);
+
   return (
     <main>
+      <div>
+        <h1>Gallery</h1>
+        {photos?.items?.filter((item) => item.path.match(/\.(jpg|jpeg|png|gif)$/i)).map((item) => (
+          <div key={item.eTag}>
+            <Image 
+              src={"https://amplify-d28yvtaq3spb0b-main--gallerybucket0d10a12d-nwa7vcma48js.s3.us-west-1.amazonaws.com/" + item.path} 
+              alt={item.path} 
+              width={100} 
+              height={0}
+              style={{height: "auto", objectFit: "contain"}}
+            />
+          </div>
+        ))}
+      </div>
       <h1>{user?.signInDetails?.loginId}'s todos</h1>
       <button onClick={createTodo}>+ new</button>
       <ul>
